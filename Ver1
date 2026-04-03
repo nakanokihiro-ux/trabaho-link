@@ -1,0 +1,213 @@
+// Trabaho Link - Premium UI + Animations
+// React Native + Expo
+
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, Animated } from 'react-native';
+
+const questions = [
+  { text: 'Do you enjoy talking to new people?', type: 'communication' },
+  { text: 'Are you comfortable speaking in Japanese?', type: 'japanese' },
+  { text: 'Do you like solving logical problems?', type: 'logic' },
+  { text: 'Can you sit and focus for long periods?', type: 'logic' },
+  { text: 'Do you have good physical stamina?', type: 'physical' },
+  { text: 'Are you okay with standing work for many hours?', type: 'physical' },
+  { text: 'Do you enjoy helping others?', type: 'care' },
+  { text: 'Are you patient?', type: 'care' },
+  { text: 'Do you prefer teamwork?', type: 'communication' },
+  { text: 'Can you follow instructions carefully?', type: 'factory' },
+  { text: 'Do you like repetitive work?', type: 'factory' },
+  { text: 'Are you interested in technology?', type: 'logic' },
+  { text: 'Are you motivated to learn Japanese?', type: 'japanese' },
+  { text: 'Can you handle stress calmly?', type: 'care' },
+  { text: 'Do you want stable work?', type: 'general' }
+];
+
+const getResult = (scores) => {
+  if (scores.logic >= 5) return { job: 'IT Engineer', salary: '¥250K - ¥500K', link: 'https://stackoverflow.com/jobs' };
+  if (scores.communication >= 4 && scores.japanese >= 3) return { job: 'Customer Service', salary: '¥180K - ¥250K', link: 'https://jobsinjapan.com' };
+  if (scores.care >= 4) return { job: 'Caregiver', salary: '¥200K - ¥300K', link: 'https://jobsinjapan.com' };
+  if (scores.physical >= 4 || scores.factory >= 3) return { job: 'Factory Worker', salary: '¥170K - ¥230K', link: 'https://gaijinpot.com/jobs/' };
+  return { job: 'General Work', salary: '¥170K - ¥250K', link: 'https://gaijinpot.com/jobs/' };
+};
+
+export default function App() {
+  const [step, setStep] = useState(0);
+  const [scores, setScores] = useState({
+    communication: 0, logic: 0, physical: 0, japanese: 0, care: 0, factory: 0, general: 0
+  });
+
+  // Animations
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const runFade = () => {
+    fadeAnim.setValue(0);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true
+    }).start();
+  };
+
+  const pressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true
+    }).start();
+  };
+
+  const pressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      useNativeDriver: true
+    }).start();
+  };
+
+  const answer = (value) => {
+    const type = questions[step].type;
+
+    setScores(prev => ({ ...prev, [type]: prev[type] + value }));
+
+    if (step + 1 < questions.length) {
+      setStep(step + 1);
+      runFade();
+    } else {
+      setStep('result');
+      runFade();
+    }
+  };
+
+  if (step === 'result') {
+    const result = getResult(scores);
+
+    return (
+      <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+        <Text style={styles.title}>🎯 Your Best Job</Text>
+
+        <View style={styles.card}>
+          <Text style={styles.job}>{result.job}</Text>
+          <Text style={styles.salary}>💰 {result.salary}</Text>
+        </View>
+
+        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+          <TouchableOpacity
+            style={styles.cta}
+            onPressIn={pressIn}
+            onPressOut={pressOut}
+            onPress={() => Linking.openURL(result.link)}
+          >
+            <Text style={styles.ctaText}>🚀 Start Working in Japan</Text>
+          </TouchableOpacity>
+        </Animated.View>
+
+        <TouchableOpacity onPress={() => {
+          setStep(0);
+          runFade();
+        }}>
+          <Text style={styles.retry}>Try Again</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  }
+
+  return (
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+      <Text style={styles.progress}>{step + 1}/{questions.length}</Text>
+
+      <View style={styles.card}>
+        <Text style={styles.question}>{questions[step].text}</Text>
+      </View>
+
+      {[{ label: 'YES 👍', value: 2 }, { label: 'NEUTRAL', value: 1 }, { label: 'NO 👎', value: 0 }].map((btn, i) => (
+        <Animated.View key={i} style={{ transform: [{ scale: scaleAnim }] }}>
+          <TouchableOpacity
+            style={i === 0 ? styles.button : styles.buttonSecondary}
+            onPressIn={pressIn}
+            onPressOut={pressOut}
+            onPress={() => answer(btn.value)}
+          >
+            <Text style={styles.buttonText}>{btn.label}</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      ))}
+    </Animated.View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+    padding: 20,
+    justifyContent: 'center',
+    maxWidth: 500,
+    width: '100%',
+    alignSelf: 'center'
+  },
+  progress: {
+    color: '#94A3B8',
+    textAlign: 'center',
+    marginBottom: 10
+  },
+  title: {
+    color: '#fff',
+    fontSize: 26,
+    textAlign: 'center',
+    marginBottom: 20
+  },
+  card: {
+    backgroundColor: '#1E293B',
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 20
+  },
+  question: {
+    color: '#fff',
+    fontSize: 18,
+    textAlign: 'center'
+  },
+  button: {
+    backgroundColor: '#F59E0B',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 10
+  },
+  buttonSecondary: {
+    backgroundColor: '#334155',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 10
+  },
+  buttonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontWeight: 'bold'
+  },
+  job: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold'
+  },
+  salary: {
+    color: '#FACC15',
+    marginTop: 10
+  },
+  cta: {
+    backgroundColor: '#EF4444',
+    padding: 18,
+    borderRadius: 14,
+    marginTop: 10
+  },
+  ctaText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontWeight: 'bold',
+    fontSize: 16
+  },
+  retry: {
+    color: '#94A3B8',
+    textAlign: 'center',
+    marginTop: 15
+  }
+});
